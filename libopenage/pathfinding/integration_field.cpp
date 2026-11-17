@@ -143,7 +143,10 @@ std::vector<size_t> IntegrationField::integrate_los(const std::shared_ptr<CostFi
 
 			if (not(this->cells[target_idx].flags & transfer_mask)) {
 				// If neither LOS nor wavefront blocked flags are set for the portal entry,
-				// the portal exit cell doesn't affect the LOS and we can skip further checks
+				// the target is not in line of sight through this cell. The cost integration
+				// still has to start from it, as it may be the only way into the field.
+				this->cells[target_idx].flags |= INTEGRATE_FOUND_MASK;
+				wavefront_blocked_portal.push_back(target_idx);
 				continue;
 			}
 

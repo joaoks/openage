@@ -126,6 +126,16 @@ const Path Pathfinder::get_path(const PathRequest &request) {
 	auto portal_status = portal_result.first;
 	auto portal_path = portal_result.second;
 
+	if (portal_status == PathResult::NOT_FOUND) {
+		// The flow fields are built backwards from the target sector,
+		// which a partial portal path does not reach.
+		log::log(DBG << "Path not found (start = "
+		             << request.start << "; target = "
+		             << request.target << "): "
+		             << "No portal path connects the start and target.");
+		return Path{request.grid_id, PathResult::NOT_FOUND, {}};
+	}
+
 	// Low-level pathfinding
 	// Find the path within the sectors
 
@@ -175,18 +185,11 @@ const Path Pathfinder::get_path(const PathRequest &request) {
 	}
 	waypoints.insert(waypoints.end(), flow_field_waypoints.begin(), flow_field_waypoints.end());
 
-	if (portal_status == PathResult::NOT_FOUND) {
-		log::log(DBG << "Path not found (start = "
-		             << request.start << "; target = "
-		             << request.target << ")");
-	}
-	else {
-		log::log(DBG << "Path found (start = "
-		             << request.start << "; target = "
-		             << request.target << ")");
-	}
+	log::log(DBG << "Path found (start = "
+	             << request.start << "; target = "
+	             << request.target << ")");
 
-	return Path{request.grid_id, portal_status, waypoints};
+	return Path{request.grid_id, PathResult::FOUND, waypoints};
 }
 
 const std::shared_ptr<Grid> &Pathfinder::get_grid(grid_id_t id) const {
@@ -275,7 +278,7 @@ const Pathfinder::portal_star_t Pathfinder::portal_a_star(const PathRequest &req
 
 		// evaluate all neighbors of the current candidate for further progress
 		for (auto &[exit, distance_cost] : exits) {
-			exit->entry_sector = current_node->portal->get_exit_sector(current_node->entry_sector.value());
+			auto entry_sector = current_node->portal->get_exit_sector(current_node->entry_sector.value());
 			bool not_visited = !visited_portals.contains(exit->portal->get_id());
 
 			if (not_visited) {
@@ -289,15 +292,17 @@ const Pathfinder::portal_star_t Pathfinder::portal_a_star(const PathRequest &req
 			auto tentative_cost = current_node->current_cost + distance_cost;
 
 			if (not_visited or tentative_cost < exit->current_cost) {
-				if (not_visited) {
-					// Get heuristic cost (from exit node to target cell)
-					auto exit_sector = grid->get_sector(exit->portal->get_exit_sector(exit->entry_sector.value()));
-					auto exit_sector_pos = exit_sector->get_position().to_tile(sector_size);
-					auto exit_portal_pos = exit->portal->get_exit_center(exit->entry_sector.value());
-					exit->heuristic_cost = Pathfinder::heuristic_cost(
-						exit_sector_pos + exit_portal_pos,
-						request.target);
-				}
+				// A portal can be entered from both of its sectors, so the entry sector
+				// must only change together with the path that leads to the portal.
+				exit->entry_sector = entry_sector;
+
+				// Get heuristic cost (from exit node to target cell)
+				auto exit_sector = grid->get_sector(exit->portal->get_exit_sector(entry_sector));
+				auto exit_sector_pos = exit_sector->get_position().to_tile(sector_size);
+				auto exit_portal_pos = exit->portal->get_exit_center(entry_sector);
+				exit->heuristic_cost = Pathfinder::heuristic_cost(
+					exit_sector_pos + exit_portal_pos,
+					request.target);
 
 				// update the cost knowledge
 				exit->current_cost = tentative_cost;
