@@ -11,30 +11,6 @@
 #include "util/path.h"
 
 
-// TODO: Remove custom jthread definition when clang/libc++ finally supports it
-#if __llvm__
-	#if !__cpp_lib_jthread
-namespace std {
-class jthread : public thread {
-public:
-	using thread::thread; // needed constructors
-	jthread(const jthread &) = delete;
-	jthread &operator=(const jthread &) = delete;
-	jthread(jthread &&) = default;
-	jthread &operator=(jthread &&) = default;
-	~jthread() {
-		if (this->joinable()) {
-			this->join();
-		}
-	}
-};
-} // namespace std
-	#endif
-#else
-	#include <stop_token>
-#endif
-
-
 namespace openage {
 
 namespace cvar {
@@ -45,9 +21,6 @@ namespace gamestate {
 class GameSimulation;
 } // namespace gamestate
 
-namespace presenter {
-class Presenter;
-} // namespace presenter
 
 namespace time {
 class TimeLoop;
@@ -111,11 +84,6 @@ private:
 	util::Path root_dir;
 
 	/**
-	 * The threads used by the engine.
-	 */
-	std::vector<std::jthread> threads;
-
-	/**
 	 * Environment variables.
 	 */
 	std::shared_ptr<cvar::CVarManager> cvar_manager;
@@ -131,9 +99,12 @@ private:
 	std::shared_ptr<gamestate::GameSimulation> simulation;
 
 	/**
-	 * Video/audio/input management. Can be nullptr in headless mode.
+	 * The threads used by the engine.
+	 *
+	 * Declared last so that they are stopped and joined before the other members
+	 * are destroyed, which the threads may still use.
 	 */
-	std::shared_ptr<presenter::Presenter> presenter;
+	std::vector<std::jthread> threads;
 };
 
 } // namespace engine
