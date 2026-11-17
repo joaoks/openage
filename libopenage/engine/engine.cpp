@@ -39,28 +39,23 @@ Engine::Engine(mode mode,
 	                                                               this->time_loop);
 	this->simulation->set_modpacks(mods);
 
-	// presenter (optional)
-	if (this->run_mode == mode::FULL) {
-		this->presenter = std::make_shared<presenter::Presenter>(this->root_dir,
-		                                                         this->simulation,
-		                                                         this->time_loop);
-	}
-
 	// spawn thread to run time loop
-	this->threads.emplace_back([&]() {
-		this->time_loop->run();
-
-		this->time_loop.reset();
+	this->threads.emplace_back([time_loop = this->time_loop](std::stop_token stop) {
+		time_loop->run(stop);
 	});
 
 	// if presenter is used, run it in a separate thread
 	if (this->run_mode == mode::FULL) {
-		this->threads.emplace_back([&]() {
-			this->presenter->run(window_settings);
+		auto presenter = std::make_shared<presenter::Presenter>(this->root_dir,
+		                                                        this->simulation,
+		                                                        this->time_loop);
 
-			// Make sure that the presenter gets destructed in the same thread
-			// otherwise OpenGL complains about missing contexts
-			this->presenter.reset();
+		this->threads.emplace_back([this, presenter = std::move(presenter), window_settings](std::stop_token stop) mutable {
+			presenter->run(window_settings, stop);
+
+			// The presenter must be destroyed in the thread that owns its OpenGL context,
+			// so this thread holds the only reference to it.
+			presenter.reset();
 			this->running = false;
 		});
 	}

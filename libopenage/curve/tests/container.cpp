@@ -345,6 +345,18 @@ void test_array() {
 	TESTEQUALS(*it, 6);
 	++it;
 	TESTEQUALS(*it, 7);
+
+	// set_last replaces the last of several keyframes at the same time
+	a.set_insert(7, 1, 70);
+	a.set_insert(7, 1, 71);
+	a.set_last(7, 1, 72);
+	TESTEQUALS(a.at(6, 1), 5);
+	TESTEQUALS(a.at(7, 1), 72);
+
+	// set_last at -inf replaces the default value
+	a.set_last(time::TIME_MIN, 2, 9);
+	TESTEQUALS(a.at(time::TIME_MIN, 2), 9);
+	TESTEQUALS(a.at(5, 2), 9);
 }
 
 void test_vector() {

@@ -47,14 +47,15 @@ Presenter::Presenter(const util::Path &root_dir,
 	time_loop{time_loop} {}
 
 
-void Presenter::run(const renderer::window_settings window_settings) {
+void Presenter::run(const renderer::window_settings window_settings,
+                    std::stop_token stop) {
 	log::log(INFO << "Presenter: Launching subsystems...");
 
 	this->init_graphics(window_settings);
 
 	this->init_input();
 
-	while (not this->window->should_close()) {
+	while (not this->window->should_close() and not stop.stop_requested()) {
 		this->gui_app->process_events();
 		// TODO: pass button presses and events from GUI to controller
 

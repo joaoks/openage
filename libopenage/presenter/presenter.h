@@ -3,6 +3,7 @@
 #pragma once
 
 #include <memory>
+#include <stop_token>
 #include <vector>
 
 #include "renderer/window.h"
@@ -90,8 +91,10 @@ public:
 	 * Start the presenter and initialize subsystems.
 	 *
 	 * @param window_settings The settings to customize the display window (e.g. size, display mode, vsync).
+	 * @param stop Closes the window when stop is requested.
 	 */
-	void run(const renderer::window_settings window_settings = {});
+	void run(const renderer::window_settings window_settings = {},
+	         std::stop_token stop = {});
 
 	/**
 	 * Set the game simulation controlled by this presenter.

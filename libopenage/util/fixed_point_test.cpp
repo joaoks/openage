@@ -201,7 +201,10 @@ void fixed_point() {
 		// Test with negative number
 		TESTTHROWS((FixedPoint<int64_t, 32>::from_float(-3.25).sqrt()));
 		TESTNOEXCEPT((FixedPoint<int64_t, 32>::from_float(3.25).sqrt()));
-		TESTNOEXCEPT((FixedPoint<uint64_t, 32>::from_float(-3.25).sqrt()));
+
+		// unsigned values with the sign bit set are not negative
+		auto sign_bit_set = FP16_16::from_raw_value(uint32_t{1} << 31);
+		TESTEQUALS_FLOAT(sign_bit_set.sqrt(), std::sqrt(sign_bit_set.to_double()), 1e-4);
 	}
 }
 

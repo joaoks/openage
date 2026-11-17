@@ -18,9 +18,9 @@ TimeLoop::TimeLoop(const std::shared_ptr<Clock> clock) :
 	running{false},
 	clock{clock} {}
 
-void TimeLoop::run() {
+void TimeLoop::run(std::stop_token stop) {
 	this->start();
-	while (this->running) {
+	while (this->running and not stop.stop_requested()) {
 		this->clock->update_time();
 	}
 	log::log(MSG(info) << "Time loop exited");

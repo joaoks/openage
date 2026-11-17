@@ -232,6 +232,26 @@ void curve_types() {
 		TESTEQUALS(c.get(8), 4);
 	}
 
+	// interpolated curves keep the value at -inf until the first keyframe
+	{
+		auto f = std::make_shared<event::EventLoop>();
+		Continuous<int> c(f, 0);
+		TESTEQUALS(c.get(5), 0);
+
+		c.set_insert(5, 10);
+		TESTEQUALS(c.get(-3), 0);
+		TESTEQUALS(c.get(3), 0);
+		TESTEQUALS(c.get(5), 10);
+		TESTEQUALS(c.get(8), 10);
+	}
+	{
+		auto f = std::make_shared<event::EventLoop>();
+		Segmented<int> c(f, 0);
+		c.set_insert_jump(5, 4, 10);
+		TESTEQUALS(c.get(3), 0);
+		TESTEQUALS(c.get(5), 10);
+	}
+
 	// Check the discrete type
 	{
 		auto f = std::make_shared<event::EventLoop>();
@@ -302,6 +322,68 @@ void curve_types() {
 
 		c.set_last(2, 10);
 		TESTEQUALS(c.get(2), 10);
+	}
+
+	// set_last replaces the last of several keyframes at the same time
+	{
+		auto f = std::make_shared<event::EventLoop>();
+		Discrete<int> c(f, 0);
+		c.set_insert(5, 1);
+		c.set_insert(5, 2);
+		c.set_insert(8, 3);
+
+		c.set_last(5, 4);
+		TESTEQUALS(c.get(4), 0);
+		TESTEQUALS(c.get(5), 4);
+		TESTEQUALS(c.get(8), 4);
+	}
+
+	// set_last at -inf replaces the default value
+	{
+		auto f = std::make_shared<event::EventLoop>();
+		Discrete<int> c(f, 0);
+		c.set_insert(5, 1);
+
+		c.set_last(time::TIME_MIN, 7);
+		TESTEQUALS(c.get(time::TIME_MIN), 7);
+		TESTEQUALS(c.get(5), 7);
+
+		c.set_last(time::TIME_MIN, 8);
+		TESTEQUALS(c.get(time::TIME_MIN), 8);
+		TESTEQUALS(c.get(5), 8);
+	}
+	{
+		auto f = std::make_shared<event::EventLoop>();
+		Continuous<int> c(f, 0);
+		c.set_insert(5, 10);
+
+		c.set_last(time::TIME_MIN, 3);
+		TESTNOEXCEPT(c.check_integrity());
+		TESTEQUALS(c.get(time::TIME_MIN), 3);
+		TESTEQUALS(c.get(5), 3);
+	}
+	{
+		auto f = std::make_shared<event::EventLoop>();
+		Segmented<int> c(f, 0);
+		c.set_insert(5, 10);
+
+		c.set_last_jump(time::TIME_MIN, 1, 2);
+		TESTNOEXCEPT(c.check_integrity());
+		TESTEQUALS(c.get(time::TIME_MIN), 2);
+		TESTEQUALS(c.get(5), 2);
+	}
+
+	// set_last at the time of a jump replaces its right value
+	{
+		auto f = std::make_shared<event::EventLoop>();
+		Segmented<int> c(f, 0);
+		c.set_insert(0, 0);
+		c.set_insert_jump(5, 1, 2);
+
+		c.set_last(5, 3);
+		TESTNOEXCEPT(c.check_integrity());
+		TESTEQUALS(c.get(5), 3);
+		TESTEQUALS(c.get(10), 3);
 	}
 
 	// Encountered Errors

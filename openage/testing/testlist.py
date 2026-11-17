@@ -34,6 +34,7 @@ def tests_py():
     yield ("openage.util.fslike.test.test", "test the filesystem abstraction subsystem")
     yield ("openage.util.fslike.cpp_tests.test", "access Python fslikes through C++ paths")
     yield "openage.util.threading.test_concurrent_chain"
+    yield ("openage.nyan.tests.number_operators", "nyan int and float member operands")
 
 
 def demos_py():
@@ -84,6 +85,7 @@ def tests_cpp():
     yield "openage::path::tests::cost_history", "pathfinding"
     yield "openage::path::tests::portals", "pathfinding"
     yield "openage::path::tests::pathfinder", "pathfinding"
+    yield "openage::path::tests::pathfinder_random_maps", "pathfinding"
     yield "openage::pyinterface::tests::pyobject"
     yield "openage::pyinterface::tests::err_py_to_cpp"
     yield "openage::renderer::tests::font"

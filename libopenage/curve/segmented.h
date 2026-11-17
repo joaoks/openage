@@ -61,8 +61,8 @@ template <typename T>
 void Segmented<T>::set_last_jump(const time::time_t &at, const T &leftval, const T &rightval) {
 	auto hint = this->container.last(at, this->last_element);
 
-	// erase all one same-time values
-	while (this->container.get(hint).time() == at) {
+	// erase all same-time values, but never the default value at -inf
+	while (hint > 0 and this->container.get(hint).time() == at) {
 		hint--;
 	}
 

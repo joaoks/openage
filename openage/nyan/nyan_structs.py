@@ -691,7 +691,15 @@ class NyanMemberType:
         if self.is_modifier():
             return self._element_types[0].accepts_op(operator)
 
-        if self._member_type in (MemberType.INT, MemberType.FLOAT) and operator not in (
+        if self._member_type is MemberType.INT and operator not in (
+            MemberOperator.ASSIGN,
+            MemberOperator.ADD,
+            MemberOperator.SUBTRACT,
+            MemberOperator.MULTIPLY,
+        ):
+            return False
+
+        if self._member_type is MemberType.FLOAT and operator not in (
             MemberOperator.ASSIGN,
             MemberOperator.ADD,
             MemberOperator.SUBTRACT,
@@ -1028,11 +1036,17 @@ class NyanMember:
         correct types too much, e.g. if a boolean is stored as uint8.
         """
         operator = self._checked_operator()
-        if self._member_type.get_real_type() is MemberType.INT and operator not in (
-            MemberOperator.DIVIDE,
-            MemberOperator.MULTIPLY,
-        ):
-            self.value = int(self.value)
+        if self._member_type.get_real_type() is MemberType.INT:
+            # nyan only accepts int operands for int members, so scaling
+            # by a fraction requires a float member
+            if operator is MemberOperator.MULTIPLY and float(self.value) != int(self.value):
+                raise ValueError(
+                    f"{self!r}: int members can only be multiplied by whole numbers, "
+                    f"not {self.value}; use a float member instead"
+                )
+
+            if operator is not MemberOperator.DIVIDE:
+                self.value = int(self.value)
 
         elif self._member_type.get_real_type() is MemberType.FLOAT:
             self.value = float(self.value)

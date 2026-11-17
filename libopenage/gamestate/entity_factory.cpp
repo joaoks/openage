@@ -2,6 +2,7 @@
 
 #include "entity_factory.h"
 
+#include <cmath>
 #include <cstdint>
 #include <deque>
 #include <mutex>
@@ -192,15 +193,19 @@ void EntityFactory::init_components(const std::shared_ptr<openage::event::EventL
 				auto setting_obj_val = std::dynamic_pointer_cast<nyan::ObjectValue>(setting.get_ptr());
 				auto setting_obj = owner_db_view->get_object(setting_obj_val->get_name());
 				auto attribute = setting_obj.get_object("AttributeSetting.attribute");
-				auto start_value = setting_obj.get_int("AttributeSetting.starting_value");
+				auto start_value = setting_obj.get_float("AttributeSetting.starting_value");
+				ENSURE(std::isfinite(start_value),
+				       "starting value of attribute " << attribute.get_name()
+				                                      << " must be finite, but is " << start_value);
 
+				// attribute values are whole numbers in the simulation
 				live->add_attribute(time::TIME_MIN,
 				                    attribute.get_name(),
 				                    std::make_shared<curve::Discrete<int64_t>>(loop,
 				                                                               0,
 				                                                               "",
 				                                                               nullptr,
-				                                                               start_value));
+				                                                               std::llround(start_value)));
 			}
 		}
 		else if (ability_parent == "engine.ability.type.Activity") {

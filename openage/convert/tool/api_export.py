@@ -8,6 +8,7 @@ from openage.convert.entity_object.conversion.modpack import Modpack
 from openage.convert.entity_object.export.formats.nyan_file import NyanFile
 from openage.convert.processor.export.data_exporter import DataExporter
 from openage.convert.processor.export.generate_manifest_hashes import generate_hashes
+from openage.convert.service.init.api_export_required import CURRENT_API_VERSION
 from openage.convert.service.read.nyan_api_loader import load_api
 from openage.nyan.import_tree import ImportTree
 from openage.util.fslike.directory import Directory
@@ -75,7 +76,9 @@ def create_modpack() -> Modpack:
 
     mod_def = modpack.get_info()
 
-    mod_def.set_info("engine", modpack_version="0.5.0", versionstr="0.5.0", repo="openage")
+    mod_def.set_info(
+        "engine", modpack_version=CURRENT_API_VERSION, versionstr=CURRENT_API_VERSION, repo="openage"
+    )
 
     mod_def.add_include("**")
 

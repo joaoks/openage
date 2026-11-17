@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <shared_mutex>
+#include <stop_token>
 
 
 namespace openage::time {
@@ -29,8 +30,10 @@ public:
 	 * Run the time loop.
 	 *
 	 * Updates the clock and dispatches events that happened.
+	 *
+	 * @param stop Exits the loop when stop is requested, in addition to \p stop().
 	 */
-	void run();
+	void run(std::stop_token stop = {});
 
 	/**
 	 * Start the time loop.

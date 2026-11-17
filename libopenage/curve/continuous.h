@@ -47,15 +47,16 @@ template <typename T>
 void Continuous<T>::set_last(const time::time_t &at, const T &value) {
 	auto hint = this->container.last(at, this->last_element);
 
-	// erase all same-time entries
-	while (this->container.get(hint).time() == at) {
+	// erase all same-time entries, but never the default value at -inf
+	while (hint > 0 and this->container.get(hint).time() == at) {
 		hint--;
 	}
 
 	hint = this->container.erase_after(hint);
 
-	this->container.insert_before(at, value, hint);
-	this->last_element = hint;
+	// replaces the default value if at is -inf, as continuous curves
+	// never have two keyframes at the same time
+	this->last_element = this->container.insert_overwrite(at, value, hint);
 
 	this->changes(at);
 }
