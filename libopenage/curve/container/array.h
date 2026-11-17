@@ -343,19 +343,17 @@ void Array<T, Size>::set_last(const time::time_t &t,
 	auto hint = this->last_elements[index];
 	auto e = this->containers.at(index).last(t, hint);
 
-	// erase max one same-time value
-	if (this->containers.at(index).get(e).time() == t) {
+	// erase max one same-time value, but never the default value at -inf
+	if (e > 0 and this->containers.at(index).get(e).time() == t) {
 		e--;
 	}
 
 	// erase all keyframes with time > t
-	this->containers.at(index).erase_after(e);
+	e = this->containers.at(index).erase_after(e);
 
-	// insert the new keyframe at the end
-	this->containers.at(index).insert_before(Keyframe{t, value}, e);
-
-	// update the hint
-	this->last_elements[index] = hint;
+	// all remaining keyframes have time <= t, so the new one is appended
+	// to become the last keyframe at t
+	this->last_elements[index] = this->containers.at(index).insert_after(Keyframe{t, value}, e);
 
 	this->changes(t);
 }

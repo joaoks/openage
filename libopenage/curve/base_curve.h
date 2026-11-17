@@ -203,15 +203,16 @@ template <typename T>
 void BaseCurve<T>::set_last(const time::time_t &at, const T &value) {
 	auto hint = this->container.last(at, this->last_element);
 
-	// erase max one same-time value
-	if (this->container.get(hint).time() == at) {
+	// erase max one same-time value, but never the default value at -inf
+	if (hint > 0 and this->container.get(hint).time() == at) {
 		hint--;
 	}
 
 	hint = this->container.erase_after(hint);
 
-	this->container.insert_before(at, value, hint);
-	this->last_element = hint;
+	// all remaining keyframes have time <= at, so the new one is appended
+	// to become the last keyframe at that time
+	this->last_element = this->container.insert_after(at, value, hint);
 
 	this->changes(at);
 }
