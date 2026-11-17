@@ -399,8 +399,8 @@ Rate of attribute points.
 AttributeSetting(Object):
     attribute       : Attribute
     min_value       : int
-    max_value       : int
-    starting_value  : int
+    max_value       : float
+    starting_value  : float
 ```
 
 Assigns an attribute to a game entity and specifies the range the attribute value can be in. The game entity has a *current attribute value* at runtime. Attribute values can be changed by abilities or effects.
@@ -2163,7 +2163,7 @@ The maximum contingent size.
 ```python
 ResourceAmount(Object):
     type   : Resource
-    amount : int
+    amount : float
 ```
 
 A fixed amount of a certain resource.
