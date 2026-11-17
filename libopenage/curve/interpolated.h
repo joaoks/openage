@@ -46,21 +46,22 @@ T Interpolated<T>::get(const time::time_t &time) const {
 	auto nxt = e;
 	++nxt;
 
-	time::time_t interval = 0;
+	// Use the last curve value. There is no finite interval to interpolate over
+	// from the default value at -inf, so it holds until the next keyframe.
+	if (nxt == this->container.size()
+	    or this->container.get(e).time() == time::TIME_MIN) {
+		return this->container.get(e).val();
+	}
 
 	auto offset = time - this->container.get(e).time();
-
-	if (nxt != this->container.size()) {
-		interval = this->container.get(nxt).time() - this->container.get(e).time();
-	}
+	auto interval = this->container.get(nxt).time() - this->container.get(e).time();
 
 	// here, offset > interval will never hold.
 	// otherwise the underlying storage is broken.
 
 	// If the next element is at the same time, just return the value of this one.
-	if (nxt == this->container.size() // use the last curve value
-	    || offset == 0 // values equal -> don't need to interpolate
-	    || interval == 0) { // values at the same time -> division-by-zero-error
+	if (offset == 0 // values equal -> don't need to interpolate
+	    or interval == 0) { // values at the same time -> division-by-zero-error
 
 		return this->container.get(e).val();
 	}

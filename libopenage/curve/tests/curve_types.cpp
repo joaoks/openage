@@ -232,6 +232,26 @@ void curve_types() {
 		TESTEQUALS(c.get(8), 4);
 	}
 
+	// interpolated curves keep the value at -inf until the first keyframe
+	{
+		auto f = std::make_shared<event::EventLoop>();
+		Continuous<int> c(f, 0);
+		TESTEQUALS(c.get(5), 0);
+
+		c.set_insert(5, 10);
+		TESTEQUALS(c.get(-3), 0);
+		TESTEQUALS(c.get(3), 0);
+		TESTEQUALS(c.get(5), 10);
+		TESTEQUALS(c.get(8), 10);
+	}
+	{
+		auto f = std::make_shared<event::EventLoop>();
+		Segmented<int> c(f, 0);
+		c.set_insert_jump(5, 4, 10);
+		TESTEQUALS(c.get(3), 0);
+		TESTEQUALS(c.get(5), 10);
+	}
+
 	// Check the discrete type
 	{
 		auto f = std::make_shared<event::EventLoop>();
