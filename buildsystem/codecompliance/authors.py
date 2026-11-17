@@ -58,7 +58,8 @@ def get_author_emails_git_shortlog(exts):
     """
     from subprocess import PIPE, Popen
 
-    invocation = ["git", "shortlog", "-sne", "--"]
+    # without a revision, git shortlog reads the log from stdin if it's not a terminal
+    invocation = ["git", "shortlog", "-sne", "HEAD", "--"]
     for ext in exts:
         invocation.append(f"*{ext}")
         invocation.append(f"*{ext}.in")
