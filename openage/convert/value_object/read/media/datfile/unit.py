@@ -10,6 +10,7 @@ from ....read.member_access import READ, READ_GEN, SKIP
 from ....read.read_members import ContinueReadMember, EnumLookupMember, IncludeMembers, SubdataMember
 from ....read.value_members import StorageType
 from ...genie_structure import GenieStructure
+from .format_version import has_fixed_de2_drop_sites, has_recent_de2_format
 from .lookup_dicts import (
     ARMOR_CLASS,
     ATTACK_MODES,
@@ -116,9 +117,11 @@ class UnitCommand(GenieStructure):
                     (READ_GEN, "wwise_resource_gather_sound_id", StorageType.ID_MEMBER, "uint32_t"),
                     # sound to play on resource drop
                     (READ_GEN, "wwise_resource_deposit_sound_id", StorageType.ID_MEMBER, "uint32_t"),
-                    (READ_GEN, "unknown_de2", StorageType.ID_MEMBER, "int16_t"),
                 ]
             )
+
+        if has_recent_de2_format(game_version):
+            data_format.append((READ_GEN, "unknown_de2", StorageType.ID_MEMBER, "int16_t"))
 
         return data_format
 
@@ -513,7 +516,7 @@ class UnitObject(GenieStructure):
                 ]
             )
 
-            if game_version.edition.game_id != "AOE2DE":
+            if not has_recent_de2_format(game_version):
                 # bitfield of unit attributes:
                 # bit 0: allow garrison,
                 # bit 1: don't join formation,
@@ -793,7 +796,10 @@ class ActionUnit(MovingUnit):
             (READ_GEN, "work_rate", StorageType.FLOAT_MEMBER, "float"),
         ]
 
-        if game_version.edition.game_id == "AOE2DE":
+        if has_fixed_de2_drop_sites(game_version):
+            data_format.append((READ_GEN, "drop_sites", StorageType.ARRAY_ID, "int16_t[3]"))
+
+        elif game_version.edition.game_id == "AOE2DE":
             data_format.extend(
                 [
                     (READ, "drop_sites_count", StorageType.INT_MEMBER, "int16_t"),
@@ -964,9 +970,11 @@ class ProjectileUnit(ActionUnit):
         )
 
         if game_version.edition.game_id == "AOE2DE":
+            data_format.append((READ_GEN, "blast_damage", StorageType.FLOAT_MEMBER, "float"))
+
+        if has_recent_de2_format(game_version):
             data_format.extend(
                 [
-                    (READ_GEN, "blast_damage", StorageType.FLOAT_MEMBER, "float"),
                     (SKIP, "unknown_de2_0", StorageType.FLOAT_MEMBER, "float"),
                     (SKIP, "unknown_de2_1", StorageType.FLOAT_MEMBER, "float"),
                     (SKIP, "unknown_de2_2", StorageType.INT_MEMBER, "int16_t"),
@@ -1058,7 +1066,7 @@ class LivingUnit(ProjectileUnit):
             ]
         )
 
-        if game_version.edition.game_id == "AOE2DE":
+        if has_recent_de2_format(game_version):
             data_format.append((READ, "variant_count_de2", StorageType.INT_MEMBER, "int16_t"))
 
         data_format.extend(
@@ -1094,22 +1102,24 @@ class LivingUnit(ProjectileUnit):
 
         if game_version.edition.game_id not in ("ROR", "AOE1DE"):
             if game_version.edition.game_id == "AOE2DE":
-                data_format.extend(
-                    [
-                        (
-                            SKIP,
-                            "variants_de2",
-                            StorageType.ARRAY_CONTAINER,
-                            SubdataMember(
-                                ref_type=UnitVariantDE2,
-                                length=lambda o: max(0, o.variant_count_de2 - 1),
+                if has_recent_de2_format(game_version):
+                    data_format.extend(
+                        [
+                            (
+                                SKIP,
+                                "variants_de2",
+                                StorageType.ARRAY_CONTAINER,
+                                SubdataMember(
+                                    ref_type=UnitVariantDE2,
+                                    length=lambda o: max(0, o.variant_count_de2 - 1),
+                                ),
                             ),
-                        ),
-                        (SKIP, "unknown_de2_6", StorageType.INT_MEMBER, "int16_t"),
-                        (SKIP, "unknown_de2_7", StorageType.INT_MEMBER, "int16_t"),
-                        (READ_GEN, "heal_timer", StorageType.FLOAT_MEMBER, "float"),
-                    ]
-                )
+                            (SKIP, "unknown_de2_6", StorageType.INT_MEMBER, "int16_t"),
+                            (SKIP, "unknown_de2_7", StorageType.INT_MEMBER, "int16_t"),
+                        ]
+                    )
+
+                data_format.append((READ_GEN, "heal_timer", StorageType.FLOAT_MEMBER, "float"))
             else:
                 data_format.extend(
                     [
@@ -1144,18 +1154,36 @@ class LivingUnit(ProjectileUnit):
                         (READ_GEN, "spawn_graphic_id", StorageType.ID_MEMBER, "int16_t"),
                         (READ_GEN, "upgrade_graphic_id", StorageType.ID_MEMBER, "int16_t"),
                         (READ_GEN, "hero_glow_graphic_id", StorageType.ID_MEMBER, "int16_t"),
-                        (SKIP, "unknown_de2_8", StorageType.INT_MEMBER, "int16_t"),
+                    ]
+                )
+
+                if has_recent_de2_format(game_version):
+                    data_format.append((SKIP, "unknown_de2_8", StorageType.INT_MEMBER, "int16_t"))
+
+                data_format.extend(
+                    [
                         (READ_GEN, "max_charge", StorageType.FLOAT_MEMBER, "float"),
                         (READ_GEN, "charge_regen_rate", StorageType.FLOAT_MEMBER, "float"),
                         (READ_GEN, "charge_cost", StorageType.ID_MEMBER, "int16_t"),
                         (READ_GEN, "charge_type", StorageType.ID_MEMBER, "int16_t"),
-                        (SKIP, "unknown_de2_9", StorageType.INT_MEMBER, "int16_t"),
-                        (SKIP, "unknown_de2_10", StorageType.ID_MEMBER, "int32_t"),
-                        (SKIP, "unknown_de2_11", StorageType.INT_MEMBER, "int8_t"),
-                        (SKIP, "unknown_de2_12", StorageType.ID_MEMBER, "int32_t"),
-                        (SKIP, "unknown_de2_13", StorageType.ID_MEMBER, "int32_t"),
-                        (SKIP, "unknown_de2_14", StorageType.ID_MEMBER, "int32_t"),
-                        (SKIP, "unknown_de2_15", StorageType.ID_MEMBER, "int32_t"),
+                    ]
+                )
+
+                if has_recent_de2_format(game_version):
+                    data_format.extend(
+                        [
+                            (SKIP, "unknown_de2_9", StorageType.INT_MEMBER, "int16_t"),
+                            (SKIP, "unknown_de2_10", StorageType.ID_MEMBER, "int32_t"),
+                            (SKIP, "unknown_de2_11", StorageType.INT_MEMBER, "int8_t"),
+                            (SKIP, "unknown_de2_12", StorageType.ID_MEMBER, "int32_t"),
+                            (SKIP, "unknown_de2_13", StorageType.ID_MEMBER, "int32_t"),
+                            (SKIP, "unknown_de2_14", StorageType.ID_MEMBER, "int32_t"),
+                            (SKIP, "unknown_de2_15", StorageType.ID_MEMBER, "int32_t"),
+                        ]
+                    )
+
+                data_format.extend(
+                    [
                         (READ_GEN, "min_convert_mod", StorageType.FLOAT_MEMBER, "float"),
                         (READ_GEN, "max_convert_mod", StorageType.FLOAT_MEMBER, "float"),
                         (READ_GEN, "convert_chance_mod", StorageType.FLOAT_MEMBER, "float"),

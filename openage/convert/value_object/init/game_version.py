@@ -193,3 +193,7 @@ class GameVersion:
 
     edition: GameEdition
     expansions: tuple[GameExpansion, ...] = tuple()
+
+    # (major, minor) from the version string of the .dat file, if it was read;
+    # the .dat format can differ between builds of the same edition
+    datfile_version: tuple[int, int] | None = None

@@ -11,6 +11,7 @@ from ....read.read_members import SubdataMember
 from ....read.value_members import StorageType
 from ...genie_structure import GenieStructure
 from . import civ, graphic, maps, playercolor, research, sound, tech, terrain, unit
+from .format_version import has_recent_de2_format
 
 if typing.TYPE_CHECKING:
     from openage.convert.value_object.init.game_version import GameVersion
@@ -450,7 +451,7 @@ class EmpiresDat(GenieStructure):
                 ]
             )
 
-            if game_version.edition.game_id in ("SWGB", "AOE2DE"):
+            if game_version.edition.game_id == "SWGB" or has_recent_de2_format(game_version):
                 data_format.append((READ, "unit_connection_count", StorageType.INT_MEMBER, "uint16_t"))
 
             else:

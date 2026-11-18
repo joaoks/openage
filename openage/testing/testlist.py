@@ -8,6 +8,7 @@ def doctest_modules():
     Yields the names of all Python modules that shall be tested during doctest.
     """
 
+    yield "openage.convert.value_object.read.media.datfile.format_version"
     yield "openage.util.math"
     yield "openage.util.strings"
     yield "openage.util.system"
@@ -35,6 +36,10 @@ def tests_py():
     yield ("openage.util.fslike.cpp_tests.test", "access Python fslikes through C++ paths")
     yield "openage.util.threading.test_concurrent_chain"
     yield ("openage.nyan.tests.number_operators", "nyan int and float member operands")
+    yield (
+        "openage.convert.value_object.read.media.datfile.tests.de2_formats",
+        "AoE2: DE .dat format selection by .dat version",
+    )
 
 
 def demos_py():

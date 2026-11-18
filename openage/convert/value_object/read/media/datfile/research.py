@@ -10,6 +10,7 @@ from ....read.member_access import READ, READ_GEN, SKIP
 from ....read.read_members import EnumLookupMember, SubdataMember
 from ....read.value_members import StorageType
 from ...genie_structure import GenieStructure
+from .format_version import has_recent_de2_format
 from .lookup_dicts import RESOURCE_TYPES
 
 if typing.TYPE_CHECKING:
@@ -106,7 +107,7 @@ class Tech(GenieStructure):
                 ]
             )
 
-        if game_version.edition.game_id != "AOE2DE":
+        if not has_recent_de2_format(game_version):
             data_format.extend(
                 [
                     # unit id, where the tech will appear to be researched
@@ -129,7 +130,7 @@ class Tech(GenieStructure):
                 ]
             )
 
-        if game_version.edition.game_id == "AOE2DE":
+        if has_recent_de2_format(game_version):
             # research location, time, button and hotkey follow the name
             data_format.extend(
                 [
@@ -182,6 +183,12 @@ class Tech(GenieStructure):
                 data_format.extend(
                     [
                         (READ_GEN, "repeatable", StorageType.INT_MEMBER, "int8_t"),
+                    ]
+                )
+
+            if has_recent_de2_format(game_version):
+                data_format.extend(
+                    [
                         # first research location; any further ones follow below
                         (READ, "research_location_count", StorageType.INT_MEMBER, "int16_t"),
                         # unit id, where the tech will appear to be researched

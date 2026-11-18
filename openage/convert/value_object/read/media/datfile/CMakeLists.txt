@@ -2,11 +2,13 @@ add_py_modules(
 	__init__.py
 	civ.py
 	empiresdat.py
+	format_version.py
 	graphic.py
 	lookup_dicts.py
 	maps.py
 	playercolor.py
 	research.py
+	tests.py
 	sound.py
 	tech.py
 	terrain.py

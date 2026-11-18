@@ -9,11 +9,13 @@ from __future__ import annotations
 import os
 import pickle
 import typing
+from dataclasses import replace
 from tempfile import gettempdir
 from zlib import decompress
 
 from ....log import dbg, info, spam, warn
 from ...value_object.read.media.datfile.empiresdat import EmpiresDatWrapper
+from ...value_object.read.media.datfile.format_version import read_datfile_version
 from ...value_object.read.media_types import MediaType
 
 if typing.TYPE_CHECKING:
@@ -96,6 +98,11 @@ def load_gamespec(
     del compressed_data
 
     spam("length of decompressed data: %d", len(file_data))
+
+    if game_version.edition.game_id == "AOE2DE":
+        datfile_version = read_datfile_version(file_data)
+        info("AoE2: DE .dat version: %d.%d", *datfile_version)
+        game_version = replace(game_version, datfile_version=datfile_version)
 
     wrapper = EmpiresDatWrapper()
     _, gamespec = wrapper.read(file_data, 0, game_version, dynamic_load=dynamic_load)
